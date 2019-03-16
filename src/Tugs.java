@@ -6,4 +6,16 @@ public class Tugs {
     this.tugs = tugs;
   }
 
+  public synchronized Boolean acquire(Integer tugs) {
+    if (this.tugs > 0) {
+      this.tugs -= tugs;
+      return true;
+    }
+    return false;
+  }
+
+  public synchronized void release(Integer tugs) {
+    this.tugs += tugs;
+  }
+
 }
