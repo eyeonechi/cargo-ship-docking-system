@@ -7,7 +7,19 @@ public class Operator extends Thread {
   }
 
   public void run() {
-    
+    while(!isInterrupted()) {
+      try {
+        // Activate shield
+        this.berth.activate();
+        sleep(Params.DEBRIS_TIME);
+
+        // Deactivate shield
+        this.berth.deactivate();
+        sleep(Params.debrisLapse());
+      } catch (InterruptedException e) {
+          this.interrupt();
+      }
+    }
   }
 
 }

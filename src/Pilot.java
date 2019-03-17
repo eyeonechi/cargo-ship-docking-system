@@ -17,33 +17,49 @@ public class Pilot extends Thread {
   public void run() {
     while(!isInterrupted()) {
       // Acquires a newly arrived cargo ship
-      Ship ship = null;
-      while (ship == null) {
-        ship = this.arrivalZone.getShip();
+      Boolean acquire = false;
+      while (acquire == false) {
+        acquire = this.arrivalZone.acquireShip(this);
       }
-      System.out.println("pilot " + id + " acquires " + ship.toString());
 
       // Acquires the required number of tugs to dock the ship
-      if (this.tugs.acquire(Params.DOCKING_TUGS)) {
-        System.out.println("pilot " + id + " acquires " + Params.DOCKING_TUGS + " tugs (" + this.tugs.getNumTugs() + " available.)");
+      Boolean tugs = false;
+      while (tugs == false) {
+        tugs = this.tugs.acquire(Params.DOCKING_TUGS);
       }
+      System.out.println(this.toString() + " acquires " + Params.DOCKING_TUGS + " tugs (" + this.tugs.getNumTugs() + " available).");
+      Ship ship = this.arrivalZone.depart();
 
       // Dock the ship and release tugs
-      this.arrivalZone.depart();
-      this.berth.dock(ship);
+      Boolean dock = false;
+      while (dock == false) {
+        dock = this.berth.dock(ship);
+      }
       this.tugs.release(Params.DOCKING_TUGS);
+      System.out.println(this.toString() + " releases " + Params.DOCKING_TUGS + " tugs (" + (this.tugs.getNumTugs() + Params.DOCKING_TUGS) + " available).");
 
       ship.unload();
 
       // After the ship is unloaded, acquires tugs for undocking
-      if (this.tugs.acquire(Params.UNDOCKING_TUGS)) {
-        System.out.println("pilot " + id + " acquires " + Params.UNDOCKING_TUGS + " tugs (" + this.tugs.getNumTugs() + " available.)");
+      tugs = false;
+      while (tugs == false) {
+        tugs = this.tugs.acquire(Params.UNDOCKING_TUGS);
+      }
+      System.out.println(this.toString() + " acquires " + Params.UNDOCKING_TUGS + " tugs (" + this.tugs.getNumTugs() + " available).");
+      Boolean undock = false;
+      while (undock == false) {
+        undock = this.berth.undock();
       }
 
       // Undock the ship and place it into the departureZone, releasing the undocking tugs
       this.departureZone.arrive(ship);
       this.tugs.release(Params.UNDOCKING_TUGS);
+      System.out.println(this.toString() + " releases " + Params.UNDOCKING_TUGS + " tugs (" + (this.tugs.getNumTugs() + Params.UNDOCKING_TUGS) + " available).");
     }
+  }
+
+  public String toString() {
+    return "pilot [" + id + "]";
   }
 
 }

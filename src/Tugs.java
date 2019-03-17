@@ -7,7 +7,7 @@ public class Tugs {
   }
 
   public synchronized Boolean acquire(Integer tugs) {
-    if (this.tugs > 0) {
+    if ((this.tugs - tugs) >= 0) {
       this.tugs -= tugs;
       return true;
     }
@@ -19,7 +19,7 @@ public class Tugs {
   }
 
   public synchronized Integer getNumTugs() {
-    return tugs;
+    return this.tugs;
   }
 
 }

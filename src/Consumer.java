@@ -20,7 +20,7 @@ public class Consumer extends Thread {
         while (!isInterrupted()) {
             try {
                 // remove a vessel that is in the departure wait zone
-                departureZone.depart();
+                Ship ship = departureZone.depart();
 
                 // let some time pass before the next departure
                 sleep(Params.departureLapse());

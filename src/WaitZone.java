@@ -13,21 +13,27 @@ public class WaitZone {
 
   public synchronized void arrive(Ship ship) {
     this.ships.add(ship);
-    System.out.println(this.ships.get(0).toString() + " arrives at " + this.type + " zone");
+    ship.setPilot(false);
+    System.out.println(this.ships.get(0).toString() + " arrives at " + this.type + " zone.");
   }
 
-  public synchronized void depart() {
+  public synchronized Ship depart() {
     if (this.ships.size() > 0) {
-      System.out.println(this.ships.get(0).toString() + " departs " + this.type + " zone");
-      this.ships.remove(0);
-    }
-  }
-
-  public synchronized Ship getShip() {
-    if (this.ships.size() > 0) {
+      System.out.println(this.ships.get(0).toString() + " departs " + this.type + " zone.");
       return this.ships.remove(0);
     }
     return null;
+  }
+
+  public synchronized Boolean acquireShip(Pilot pilot) {
+    for (Ship ship: this.ships) {
+      if (!ship.hasPilot()) {
+        ship.setPilot(true);
+        System.out.println(pilot.toString() + " acquires " + ship.toString());
+        return true;
+      }
+    }
+    return false;
   }
 
   public synchronized Boolean isFull() {

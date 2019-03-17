@@ -17,6 +17,8 @@ public class Ship {
     // a flag indicating whether the ship is currently loaded
     int loaded;
 
+    private Boolean pilot;
+
     // create a new vessel with a given identifier
     private Ship(int id) {
         this.id = id;
@@ -37,6 +39,14 @@ public class Ship {
     public void unload() {
       System.out.println(this.toString() + " being unloaded.");
       this.loaded = 0;
+    }
+
+    public Boolean hasPilot() {
+      return this.pilot;
+    }
+
+    public void setPilot(Boolean pilot) {
+      this.pilot = pilot;
     }
 
 }
