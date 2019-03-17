@@ -1,30 +1,37 @@
+import java.util.ArrayList;
+import java.util.List;
+
 public class WaitZone {
 
   private String type;
-  private Ship ship;
+  private List<Ship> ships;
 
   public WaitZone(String type) {
     this.type = type;
-    this.ship = null;
+    this.ships = new ArrayList<Ship>();
   }
 
   public synchronized void arrive(Ship ship) {
-    this.ship = ship;
-    System.out.println(this.ship.toString() + " arrives at " + this.type + " zone");
+    this.ships.add(ship);
+    System.out.println(this.ships.get(0).toString() + " arrives at " + this.type + " zone");
   }
 
   public synchronized void depart() {
-    while (ship == null);
-    System.out.println(this.ship.toString() + " departs " + this.type + " zone");
-    this.ship = null;
-  }
-
-  public synchronized Boolean hasShip() {
-    return this.ship != null;
+    if (this.ships.size() > 0) {
+      System.out.println(this.ships.get(0).toString() + " departs " + this.type + " zone");
+      this.ships.remove(0);
+    }
   }
 
   public synchronized Ship getShip() {
-    return this.ship;
+    if (this.ships.size() > 0) {
+      return this.ships.remove(0);
+    }
+    return null;
+  }
+
+  public synchronized Boolean isFull() {
+    return this.ships.size() == 1;
   }
 
 }

@@ -18,4 +18,8 @@ public class Tugs {
     this.tugs += tugs;
   }
 
+  public synchronized Integer getNumTugs() {
+    return tugs;
+  }
+
 }

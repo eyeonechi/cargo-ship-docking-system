@@ -34,4 +34,9 @@ public class Ship {
         return "ship [" + id + "]";
     }
 
+    public void unload() {
+      System.out.println(this.toString() + " being unloaded.");
+      this.loaded = 0;
+    }
+
 }
