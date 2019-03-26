@@ -15,15 +15,14 @@ public class Ship {
     private static int nextId = 1;
 
     // a flag indicating whether the ship is currently loaded
-    int loaded;
+    private Boolean loaded;
 
     private Boolean pilot;
 
     // create a new vessel with a given identifier
     private Ship(int id) {
         this.id = id;
-        this.loaded = 1;
-        // this.loaded = true;
+        this.loaded = true;
     }
 
     // get a new Ship instance with a unique identifier
@@ -38,7 +37,7 @@ public class Ship {
 
     public void unload() {
       System.out.println(this.toString() + " being unloaded.");
-      this.loaded = 0;
+      this.loaded = false;
     }
 
     public Boolean hasPilot() {

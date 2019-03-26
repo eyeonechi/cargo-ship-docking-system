@@ -35,10 +35,7 @@ public class Pilot extends Thread {
         sleep(Params.DOCKING_TIME);
 
         // Dock the ship and release tugs
-        Boolean dock = false;
-        while (dock == false) {
-          dock = this.berth.dock(ship);
-        }
+        this.berth.dock(ship);
         this.tugs.release(this, Params.DOCKING_TUGS);
 
         ship.unload();
@@ -50,11 +47,7 @@ public class Pilot extends Thread {
           tugs = this.tugs.acquire(this, Params.UNDOCKING_TUGS);
         }
 
-        Boolean undock = false;
-        while (undock == false) {
-          undock = this.berth.undock();
-        }
-
+        this.berth.undock();
         sleep(Params.UNDOCKING_TIME);
         sleep(Params.TRAVEL_TIME);
 

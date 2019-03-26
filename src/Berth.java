@@ -9,32 +9,40 @@ public class Berth {
     this.shield = false;
   }
 
-  public synchronized Boolean dock(Ship ship) {
-    if (this.shield == true || this.ship != null) {
-      return false;
+  public synchronized void dock(Ship ship) {
+    while (this.shield == true || this.ship != null) {
+      try {
+        wait();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
     }
     this.ship = ship;
     System.out.println(this.ship.toString() + " docks at " + this.name + ".");
-    return true;
   }
 
-  public synchronized Boolean undock() {
-    if (this.shield) {
-      return false;
+  public synchronized void undock() {
+    while (this.shield) {
+      try {
+        wait();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
     }
     System.out.println(this.ship.toString() + " undocks from " + this.name + ".");
     this.ship = null;
-    return true;
   }
 
   public synchronized void activate() {
     this.shield = true;
     System.out.println("Shield is activated.");
+    notifyAll();
   }
 
   public synchronized void deactivate() {
     this.shield = false;
     System.out.println("Shield is deactivated.");
+    notifyAll();
   }
 
 }
