@@ -6,18 +6,22 @@ public class Tugs {
     this.tugs = tugs;
   }
 
-  public synchronized Boolean acquire(Pilot pilot, Integer tugs) {
-    if ((this.tugs - tugs) >= 0) {
-      this.tugs -= tugs;
-      System.out.println(pilot.toString() + " acquires " + tugs + " tugs (" + this.tugs + " available).");
-      return true;
+  public synchronized void acquire(Pilot pilot, Integer tugs) {
+    while ((this.tugs - tugs) < 0) {
+      try {
+        wait();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
     }
-    return false;
+    this.tugs -= tugs;
+    System.out.println(pilot.toString() + " acquires " + tugs + " tugs (" + this.tugs + " available).");
   }
 
   public synchronized void release(Pilot pilot, Integer tugs) {
     this.tugs += tugs;
     System.out.println(pilot.toString() + " releases " + tugs + " tugs (" + this.tugs + " available).");
+    notifyAll();
   }
 
   public synchronized Integer getNumTugs() {

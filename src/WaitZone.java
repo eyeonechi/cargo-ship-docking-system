@@ -17,27 +17,21 @@ public class WaitZone {
     if (this.type.equals("arrival")) {
       System.out.println(this.ships.get(0).toString() + " arrives at " + this.type + " zone");
     }
+    notifyAll();
   }
 
   public synchronized Ship depart() {
-    if (this.ships.size() > 0) {
-      if (this.type.equals("departure")) {
-        System.out.println(this.ships.get(0).toString() + " departs " + this.type + " zone");
-      }
-      return this.ships.remove(0);
-    }
-    return null;
-  }
-
-  public synchronized Boolean acquireShip(Pilot pilot) {
-    for (Ship ship: this.ships) {
-      if (!ship.hasPilot()) {
-        ship.setPilot(true);
-        System.out.println(pilot.toString() + " acquires " + ship.toString() + ".");
-        return true;
+    while (this.ships.size() == 0) {
+      try {
+        wait();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
       }
     }
-    return false;
+    if (this.type.equals("departure")) {
+      System.out.println(this.ships.get(0).toString() + " departs " + this.type + " zone");
+    }
+    return this.ships.remove(0);
   }
 
   public synchronized Boolean isFull() {

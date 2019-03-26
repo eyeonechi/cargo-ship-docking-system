@@ -17,19 +17,14 @@ public class Pilot extends Thread {
   public void run() {
     while (!isInterrupted()) {
       try {
+
         // Acquires a newly arrived cargo ship
-        Boolean acquire = false;
-        while (acquire == false) {
-          acquire = this.arrivalZone.acquireShip(this);
-        }
+        Ship ship = this.arrivalZone.depart();
+        ship.setPilot(true);
+        System.out.println(this.toString() + " acquires " + ship.toString() + ".");
 
         // Acquires the required number of tugs to dock the ship
-        Boolean tugs = false;
-        while (tugs == false) {
-          tugs = this.tugs.acquire(this, Params.DOCKING_TUGS);
-        }
-
-        Ship ship = this.arrivalZone.depart();
+        this.tugs.acquire(this, Params.DOCKING_TUGS);
 
         sleep(Params.TRAVEL_TIME);
         sleep(Params.DOCKING_TIME);
@@ -38,14 +33,12 @@ public class Pilot extends Thread {
         this.berth.dock(ship);
         this.tugs.release(this, Params.DOCKING_TUGS);
 
+        // Commence unloading process
         ship.unload();
         sleep(Params.UNLOADING_TIME);
 
         // After the ship is unloaded, acquires tugs for undocking
-        tugs = false;
-        while (tugs == false) {
-          tugs = this.tugs.acquire(this, Params.UNDOCKING_TUGS);
-        }
+        this.tugs.acquire(this, Params.UNDOCKING_TUGS);
 
         this.berth.undock();
         sleep(Params.UNDOCKING_TIME);
@@ -54,7 +47,6 @@ public class Pilot extends Thread {
         // Undock the ship and place it into the departureZone, releasing the undocking tugs
         this.departureZone.arrive(ship);
         System.out.println(this.toString() + " releases " + ship.toString());
-        ship = null;
         this.tugs.release(this, Params.UNDOCKING_TUGS);
 
       } catch (InterruptedException e) {
