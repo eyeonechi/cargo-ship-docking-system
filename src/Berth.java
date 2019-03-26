@@ -28,12 +28,11 @@ public class Berth {
      * Docks a ship in the berth
      */
     public synchronized void dock(Ship ship) {
+        // ship can only dock if shield is deactivated and berth is empty
         while (this.shield == true || this.ship != null) {
             try {
                 wait();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            } catch (InterruptedException e) {}
         }
         this.ship = ship;
         System.out.println(this.ship.toString() + " docks at " + this.name + ".");
@@ -43,12 +42,11 @@ public class Berth {
      * Undocks a ship from the berth
      */
     public synchronized void undock() {
+        // ship can only undock if shield is deactivated
         while (this.shield) {
             try {
                 wait();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            } catch (InterruptedException e) {}
         }
         System.out.println(this.ship.toString() + " undocks from " + this.name + ".");
         this.ship = null;
@@ -57,7 +55,7 @@ public class Berth {
     /**
      * Activates the shield
      */
-    public synchronized void activate() {
+    public synchronized void activateShield() {
         this.shield = true;
         System.out.println("Shield is activated.");
         notifyAll();
@@ -66,7 +64,7 @@ public class Berth {
     /**
      * Deactivates the shield
      */
-    public synchronized void deactivate() {
+    public synchronized void deactivateShield() {
         this.shield = false;
         System.out.println("Shield is deactivated.");
         notifyAll();

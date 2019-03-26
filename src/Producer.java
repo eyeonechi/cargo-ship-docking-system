@@ -21,10 +21,8 @@ public class Producer extends Thread {
         while(!isInterrupted()) {
             try {
                 // create a new cargo ship and send it to the arrvial zone.
-                if (!arrivalZone.isFull()) {
-                  Ship ship = Ship.getNewShip();
-                  arrivalZone.arrive(ship);
-                }
+                Ship ship = Ship.getNewShip();
+                arrivalZone.arrive(ship);
 
                 // let some time pass before the next ship arrives
                 sleep(Params.arrivalLapse());

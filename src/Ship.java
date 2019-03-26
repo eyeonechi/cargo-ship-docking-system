@@ -42,16 +42,16 @@ public class Ship {
     }
 
     public void unload() {
-      System.out.println(this.toString() + " being unloaded.");
-      this.loaded = false;
+        System.out.println(this.toString() + " being unloaded.");
+        this.loaded = false;
     }
 
     public Boolean hasPilot() {
-      return this.pilot;
+        return this.pilot;
     }
 
     public void setPilot(Boolean pilot) {
-      this.pilot = pilot;
+        this.pilot = pilot;
     }
 
 }
