@@ -3,6 +3,7 @@
  * the space station to deliver its cargo.
  *
  * @author ngeard@unimelb.edu.au
+ * @author ichee@student.unimelb.edu.au 736901 (edited by)
  *
  */
 
@@ -23,11 +24,16 @@ public class Ship {
     private Ship(int id) {
         this.id = id;
         this.loaded = true;
+        this.pilot = false;
     }
 
     // get a new Ship instance with a unique identifier
     public static Ship getNewShip() {
         return new Ship(nextId++);
+    }
+
+    public Integer getId() {
+      return this.id;
     }
 
     // produce an identifying string for the cargo ship

@@ -1,3 +1,11 @@
+/**
+ * Collectively represent a pool of tugs needed by ships during travel to and from the Berth,
+ * and during docking and undocking procedure.
+ *
+ * @author ichee@student.unimelb.edu.au 736901
+ *
+ */
+
 public class Tugs {
 
   private Integer tugs;

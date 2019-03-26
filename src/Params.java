@@ -1,7 +1,16 @@
+/**
+ * A class which, for convenience, gathers together various system-wide parameters,
+ * including time intervals.
+ *
+ * @author ngeard@unimelb.edu.au
+ * @author ichee@student.unimelb.edu.au 736901 (edited by)
+ *
+ */
+
 import java.util.Random;
 
 class Params {
-    static final int NUM_PILOTS = 2;
+    static final int NUM_PILOTS = 3;
 
     static final int NUM_TUGS = 5;
 

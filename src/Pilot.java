@@ -1,4 +1,12 @@
-public class Pilot extends Thread {
+/**
+ * A pilot which operates the arriving ships to dock, unload, and undock safely at the Berth,
+ * until it safely arrives at the departure zone.
+ *
+ * @author ichee@student.unimelb.edu.au 736901
+ *
+ */
+
+ public class Pilot extends Thread {
 
   private Integer id;
   private WaitZone arrivalZone;
@@ -19,18 +27,16 @@ public class Pilot extends Thread {
       try {
 
         // Acquires a newly arrived cargo ship
-        Ship ship = this.arrivalZone.depart();
-        ship.setPilot(true);
-        System.out.println(this.toString() + " acquires " + ship.toString() + ".");
+        this.arrivalZone.acquireShip(this);
 
         // Acquires the required number of tugs to dock the ship
         this.tugs.acquire(this, Params.DOCKING_TUGS);
-
+        Ship ship = this.arrivalZone.depart();
         sleep(Params.TRAVEL_TIME);
-        sleep(Params.DOCKING_TIME);
 
         // Dock the ship and release tugs
         this.berth.dock(ship);
+        sleep(Params.DOCKING_TIME);
         this.tugs.release(this, Params.DOCKING_TUGS);
 
         // Commence unloading process
@@ -39,14 +45,14 @@ public class Pilot extends Thread {
 
         // After the ship is unloaded, acquires tugs for undocking
         this.tugs.acquire(this, Params.UNDOCKING_TUGS);
-
         this.berth.undock();
         sleep(Params.UNDOCKING_TIME);
+
         sleep(Params.TRAVEL_TIME);
 
         // Undock the ship and place it into the departureZone, releasing the undocking tugs
         this.departureZone.arrive(ship);
-        System.out.println(this.toString() + " releases " + ship.toString());
+        this.departureZone.releaseShip(this);
         this.tugs.release(this, Params.UNDOCKING_TUGS);
 
       } catch (InterruptedException e) {
