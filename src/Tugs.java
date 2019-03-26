@@ -24,8 +24,4 @@ public class Tugs {
     notifyAll();
   }
 
-  public synchronized Integer getNumTugs() {
-    return this.tugs;
-  }
-
 }
