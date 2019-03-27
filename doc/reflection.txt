@@ -1,0 +1,40 @@
+﻿Ivan Ken Weng Chee
+736901
+ichee@student.unimelb.edu.au
+Reflection
+
+
+Potential problems that can arise in this system:
+        Due to the nature of pilots releasing tugs after completion of docking, a new pilot may well acquire the newly released tugs to guide a new ship towards the berth. Should the remaining tugs be less than the number of undocking tugs, the pilot will be unable to acquire enough tugs for the ship to undock and leave the berth. This in turn causes other ships in the vicinity of the berth to wait, with nothing happening, hence a deadlock scenario. One possible solution to this problem is for pilots to partially release but keep the required number of undocking tugs whilst the ship is unloading, to ensure it is able to proceed to the departure zone. Another possible solution may be for the Tugs class to separately allocate docking and undocking tugs so that both processes are independent of each other.
+        Livelock does not occur in the system since pilots states do not clash with each other, inhibiting their progress. If pilots are programmed to voluntarily release tugs however, livelock may occur where new pilots keep acquiring the released tugs first instead of the pilot trying to undock.
+        Given that more than 1 ship can wait in a wait zone, and that the order of ships acquired by pilots is by last-in-first-out (stack), if the producer produces ships at a faster rate than pilots maneuver them, then ships at the bottom of the stack will not get a chance to get acquired and move. They will be stuck indefinitely in the arrival zone, hence starvation occurs.
+        Given the correct parameters, the system should be able to run indefinitely without experiencing deadlocks or memory leaks. This is a safety property. As the system has no notion of priority or preemption of jobs, and no mechanism of dealing with deadlocks (such as pilots volunteeringly releasing tugs after some time), the liveness of the system is relatively low. The system can also be designed in a way that does not share resources between threads, thus removing critical sections of code, which improves safety
+        The execution of pilot threads are scheduled and handled by the Java scheduler, which differs between runs and result in nondeterminism whereby it is difficult to determine which pilot will access which ship.
+        Individual threads may fail, which might cause the system to enter an inconsistent state, where no ships are produced if the Producer fails, or no ships depart if the Consumer fails. Pilots however are independent from one another, and remaining pilots can continue working on ships.
+        The critical sections in the system are the berth, wait zones and tugs. Here, multiple pilots access shared data such as ships and tugs. Monitors with synchronized methods are one way of coordinating such accesses by enforcing only one pilot to access a resource at a time.
+        
+Observations of your simulator behaviour:
+        My simulator encounters a deadlock when the number of tugs modulo docking tugs is less than undocking tugs. For example, with parameters of 3 pilots, 3 ships in wait zones, 10 total tugs, 3 docking tugs, and 2 undocking tugs, there can be a scenario where while waiting for a ship to unload, 3 other pilots may each acquire 3 tugs each and commence travelling to the berth, which leaves 1 remaining for the pilot to acquire before undocking, causing a deadlock.
+        Initially, I wrote a naive solution to the project using only while loops and boolean values, where for example, a pilot would repeatedly call the function to acquire tugs repeatedly until success. While this generated the correct output, my system CPU usage slowly crept up towards 100%. Upon rewriting and refactoring using mutual exclusion functions such as wait() and notifyAll(), the resulting simulator now runs without stressing the system as much.
+        This assignment is an example of a single producer-consumer problem, where the producer constantly places ships and consumer constantly removes them. Extending to include multiple producers and consumers such as additional asteroid mining fields will increase the complexity of the system.
+
+
+Evaluate the success or otherwise of your solution:
+        The system I constructed is able to print output corresponding to specification, and in valid order, as well as run continuously without encountering memory leaks or exceptions. However, my solution does not handle the deadlock scenario.
+        There are some elements of redundancy, such as the fact that pilot variables should be contained in the ship class, to model pilots actually sitting in a ship. However, accuracy in modelling the system is a trade-off with code complexity.
+
+
+Evaluate critical design decisions or problems that arose:
+        Redesigning the system using wait() and notifyAll() to improve efficiency from while loops and boolean variables.
+
+
+Summarise any other insights from experimenting with the simulator
+        Simulation is hard, and it is difficult or even impossible to model systems based on real life, especially systems of the future, without constraining the system with assumptions. Ambiguity in software specification can arise and needs to be handled well. Nondeterminism in concurrent processes leads to difficulty in debugging, especially in comparing output to determine correctness.
+
+
+Assumptions
+* Queue of ships pilot can only acquire first ship
+* Space is finite, therefore a wait zone should have a limit for the number of ships
+* Shield is activated when the program starts, for best protection against space debris
+* Pilots have the ability to teleport and do not need to rest
+* Tugs can pass through the shield through some unknown mechanism
