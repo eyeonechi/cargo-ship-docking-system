@@ -5,7 +5,6 @@
  * @author ichee@student.unimelb.edu.au 736901
  *
  */
-
 public class Tugs {
 
     // total number of tugs in the pool
@@ -13,6 +12,7 @@ public class Tugs {
 
     /**
      * Creates a new pool of tugs
+     * @param tugs : number of tugs
      */
     public Tugs(Integer tugs) {
         this.tugs = tugs;
@@ -20,6 +20,8 @@ public class Tugs {
 
     /**
      * Allocate tugs to a pilot
+     * @param pilot : the pilot acquiring tugs
+     * @param tugs  : how many tugs
      */
     public synchronized void acquire(Pilot pilot, Integer tugs) {
         while ((this.tugs - tugs) < 0) {
@@ -33,6 +35,8 @@ public class Tugs {
 
     /**
      * Return allocated tugs to the pool
+     * @param pilot : the pilot releasing tugs
+     * @param tugs  : how many tugs
      */
     public synchronized void release(Pilot pilot, Integer tugs) {
         while ((this.tugs + tugs) > Params.NUM_TUGS) {

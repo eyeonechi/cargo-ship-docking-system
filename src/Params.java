@@ -51,6 +51,7 @@ public class Params {
 
     /**
      * Returns a random time between 0 and MAX_DEBRIS_INTERVAL
+     * @return : debris lapse
      */
     static int debrisLapse() {
         Random rnd = new Random();
@@ -59,6 +60,7 @@ public class Params {
 
     /**
      * Returns a random time between 0 and MAX_ARRIVAL_INTERVAL
+     * @return : arrival lapse
      */
     static int arrivalLapse() {
         Random rnd = new Random();
@@ -67,6 +69,7 @@ public class Params {
 
     /**
      * Returns a random time between 0 and MAX_DEPARTURE_INTERVAL
+     * @return : departure lapse
      */
     static int departureLapse() {
         Random rnd = new Random();

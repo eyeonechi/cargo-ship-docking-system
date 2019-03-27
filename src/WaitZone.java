@@ -18,6 +18,7 @@ public class WaitZone {
 
     /**
      * Creates a new wait zone
+     * @param type : the type of wait zone
      */
     public WaitZone(String type) {
         this.type = type;
@@ -26,6 +27,7 @@ public class WaitZone {
 
     /**
      * A ship arrives at the wait zone
+     * @param ship : the ship that arrives
      */
     public synchronized void arrive(Ship ship) {
         while (this.ships.size() == Params.MAX_SHIPS) {
@@ -42,6 +44,7 @@ public class WaitZone {
 
     /**
      * A ship departs from the wait zone
+     * @return : departing ship
      */
     public synchronized Ship depart() {
         while (this.ships.size() == 0) {
@@ -64,6 +67,7 @@ public class WaitZone {
 
     /**
      * Assigns a pilot to an empty ship in the wait zone
+     * @param pilot : the pilot acquiring a ship
      */
     public synchronized void acquireShip(Pilot pilot) {
         while (this.ships.size() == 0 || this.ships.get(0).hasPilot()) {
@@ -78,6 +82,8 @@ public class WaitZone {
 
     /**
      * Removes a pilot from a ship in the wait zone
+     * @param pilot  : the pilot releasing a ship
+     * @param shipId : the id of the ship
      */
     public synchronized void releaseShip(Pilot pilot, Integer shipId) {
         for (Ship ship: this.ships) {

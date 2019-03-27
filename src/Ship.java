@@ -22,6 +22,7 @@ public class Ship {
 
     /**
      * Create a new vessel with a given identifier
+     * @param id : the id of the vessel
      */
     private Ship(int id) {
         this.id = id;
@@ -31,6 +32,7 @@ public class Ship {
 
     /**
      * Get a new Ship instance with a unique identifier
+     * @return : a new ship
      */
     public static Ship getNewShip() {
         return new Ship(nextId++);
@@ -38,6 +40,7 @@ public class Ship {
 
     /**
      * Returns the id of the ship
+     * @return : ship id
      */
     public Integer getId() {
       return this.id;
@@ -45,6 +48,7 @@ public class Ship {
 
     /**
      * Produce an identifying string for the cargo ship
+     * @return : ship identifying string
      */
     public String toString() {
         return "ship [" + id + "]";
@@ -60,6 +64,7 @@ public class Ship {
 
     /**
      * Determines whether the ship is occupied by a pilot
+     * @return : whether the ship is occupied or not
      */
     public Boolean hasPilot() {
         return this.pilot;
@@ -67,6 +72,7 @@ public class Ship {
 
     /**
      * Sets or unsets a pilot in the ship
+     * @param pilot : whether there is a pilot
      */
     public void setPilot(Boolean pilot) {
         this.pilot = pilot;

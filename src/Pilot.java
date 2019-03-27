@@ -22,6 +22,11 @@ public class Pilot extends Thread {
 
     /**
      * Creates a new pilot to start work
+     * @param id            : pilot id
+     * @param arrivalZone   : the arrival zone
+     * @param departureZone : the departure zone
+     * @param tugs          : the pool of tugs
+     * @param berth         : the USS Emafor berth
      */
     public Pilot(Integer id, WaitZone arrivalZone, WaitZone departureZone, Tugs tugs, Berth berth) {
         this.id = id;
@@ -61,7 +66,7 @@ public class Pilot extends Thread {
                 sleep(Params.UNDOCKING_TIME);
                 sleep(Params.TRAVEL_TIME);
 
-                // Undock the ship and place it into the departureZone, releasing the undocking tugs
+                // Undock the ship, guide it to the departureZone, and release the undocking tugs
                 this.departureZone.arrive(ship);
                 this.departureZone.releaseShip(this, ship.getId());
                 this.tugs.release(this, Params.UNDOCKING_TUGS);
@@ -72,7 +77,7 @@ public class Pilot extends Thread {
     }
 
     /**
-     * Prints a pilot
+     * Produce an identifying string for the pilot
      */
     public String toString() {
         return "pilot " + id;

@@ -12,6 +12,7 @@ public class Producer extends Thread {
 
     /**
      * Create a new producer
+     * @param newArrivalZone : the arrival zone
      */
     Producer(WaitZone newArrivalZone) {
         this.arrivalZone = newArrivalZone;
