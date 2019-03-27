@@ -10,14 +10,23 @@ import java.util.List;
  */
 public class WaitZone {
 
+    // type of wait zone
     private String type;
+
+    // ships currently in the wait zone
     private List<Ship> ships;
 
+    /**
+     * Creates a new wait zone
+     */
     public WaitZone(String type) {
         this.type = type;
         this.ships = new ArrayList<Ship>();
     }
 
+    /**
+     * A ship arrives at the wait zone
+     */
     public synchronized void arrive(Ship ship) {
         while (this.ships.size() == Params.MAX_SHIPS) {
             try {
@@ -31,6 +40,9 @@ public class WaitZone {
         notifyAll();
     }
 
+    /**
+     * A ship departs from the wait zone
+     */
     public synchronized Ship depart() {
         while (this.ships.size() == 0) {
             try {
@@ -50,6 +62,9 @@ public class WaitZone {
         return ship;
     }
 
+    /**
+     * Assigns a pilot to an empty ship in the wait zone
+     */
     public synchronized void acquireShip(Pilot pilot) {
         while (this.ships.size() == 0 || this.ships.get(0).hasPilot()) {
             try {
@@ -61,6 +76,9 @@ public class WaitZone {
         notifyAll();
     }
 
+    /**
+     * Removes a pilot from a ship in the wait zone
+     */
     public synchronized void releaseShip(Pilot pilot, Integer shipId) {
         for (Ship ship: this.ships) {
             if (ship.getId().equals(shipId)) {

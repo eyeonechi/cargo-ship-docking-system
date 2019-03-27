@@ -6,7 +6,6 @@
  * @author ichee@student.unimelb.edu.au 736901 (edited by)
  *
  */
-
 public class Ship {
 
     // a unique identifier for this cargo ship
@@ -18,38 +17,57 @@ public class Ship {
     // a flag indicating whether the ship is currently loaded
     private Boolean loaded;
 
+    // a flag indicating whether a pilot is in the ship
     private Boolean pilot;
 
-    // create a new vessel with a given identifier
+    /**
+     * Create a new vessel with a given identifier
+     */
     private Ship(int id) {
         this.id = id;
         this.loaded = true;
         this.pilot = false;
     }
 
-    // get a new Ship instance with a unique identifier
+    /**
+     * Get a new Ship instance with a unique identifier
+     */
     public static Ship getNewShip() {
         return new Ship(nextId++);
     }
 
+    /**
+     * Returns the id of the ship
+     */
     public Integer getId() {
       return this.id;
     }
 
-    // produce an identifying string for the cargo ship
+    /**
+     * Produce an identifying string for the cargo ship
+     */
     public String toString() {
         return "ship [" + id + "]";
     }
 
+    /**
+     * Unload cargo from the ship
+     */
     public void unload() {
         System.out.println(this.toString() + " being unloaded.");
         this.loaded = false;
     }
 
+    /**
+     * Determines whether the ship is occupied by a pilot
+     */
     public Boolean hasPilot() {
         return this.pilot;
     }
 
+    /**
+     * Sets or unsets a pilot in the ship
+     */
     public void setPilot(Boolean pilot) {
         this.pilot = pilot;
     }

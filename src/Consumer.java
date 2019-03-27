@@ -28,8 +28,7 @@ public class Consumer extends Thread {
 
                 // let some time pass before the next departure
                 sleep(Params.departureLapse());
-            }
-            catch (InterruptedException e) {
+            } catch (InterruptedException e) {
                 this.interrupt();
             }
         }

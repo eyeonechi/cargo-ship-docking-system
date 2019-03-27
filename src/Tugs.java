@@ -8,12 +8,19 @@
 
 public class Tugs {
 
+    // total number of tugs in the pool
     private Integer tugs;
 
+    /**
+     * Creates a new pool of tugs
+     */
     public Tugs(Integer tugs) {
         this.tugs = tugs;
     }
 
+    /**
+     * Allocate tugs to a pilot
+     */
     public synchronized void acquire(Pilot pilot, Integer tugs) {
         while ((this.tugs - tugs) < 0) {
             try {
@@ -24,6 +31,9 @@ public class Tugs {
         System.out.println(pilot.toString() + " acquires " + tugs + " tugs (" + this.tugs + " available).");
     }
 
+    /**
+     * Return allocated tugs to the pool
+     */
     public synchronized void release(Pilot pilot, Integer tugs) {
         while ((this.tugs + tugs) > Params.NUM_TUGS) {
             try {

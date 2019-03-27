@@ -5,18 +5,21 @@
  * @author ichee@student.unimelb.edu.au 736901 (edited by)
  *
  */
-
 public class Producer extends Thread {
 
     // the wait zone at which ships will arrive
     private WaitZone arrivalZone;
 
-    // create a new producer
+    /**
+     * Create a new producer
+     */
     Producer(WaitZone newArrivalZone) {
         this.arrivalZone = newArrivalZone;
     }
 
-    // cargo ships arrive at the arrival zone at random intervals.
+    /**
+     * Cargo ships arrive at the arrival zone at random intervals
+     */
     public void run() {
         while(!isInterrupted()) {
             try {
@@ -31,4 +34,5 @@ public class Producer extends Thread {
             }
         }
     }
+
 }
