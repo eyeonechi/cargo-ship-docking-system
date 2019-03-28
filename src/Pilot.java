@@ -1,5 +1,6 @@
 /**
- * A pilot which operates the arriving ships to dock, unload, and undock safely at the Berth,
+ * A pilot which operates the arriving ships to dock,
+ * unload, and undock safely at the Berth,
  * until it safely arrives at the departure zone.
  *
  * @author ichee@student.unimelb.edu.au 736901
@@ -28,7 +29,13 @@ public class Pilot extends Thread {
      * @param tugs          : the pool of tugs
      * @param berth         : the USS Emafor berth
      */
-    public Pilot(Integer id, WaitZone arrivalZone, WaitZone departureZone, Tugs tugs, Berth berth) {
+    public Pilot(
+      Integer id,
+      WaitZone arrivalZone,
+      WaitZone departureZone,
+      Tugs tugs,
+      Berth berth
+    ) {
         this.id = id;
         this.arrivalZone = arrivalZone;
         this.departureZone = departureZone;
@@ -37,7 +44,7 @@ public class Pilot extends Thread {
     }
 
     /**
-     * Continuously pilots a newly arrived ship to the berth for unloading,
+     * Continuously pilots newly arrived ships to the berth for unloading,
      * then to the departure zone to await departure
      */
     public void run() {
@@ -48,6 +55,8 @@ public class Pilot extends Thread {
 
                 // Acquires the required number of tugs to dock the ship
                 this.tugs.acquire(this, Params.DOCKING_TUGS);
+
+                // Depart from the arrival zone and head to the berth
                 Ship ship = this.arrivalZone.depart();
                 sleep(Params.TRAVEL_TIME);
 
@@ -60,14 +69,16 @@ public class Pilot extends Thread {
                 ship.unload();
                 sleep(Params.UNLOADING_TIME);
 
-                // After the ship is unloaded, acquires tugs for undocking
+                // After unloading, acquires tugs and undock the ship
                 this.tugs.acquire(this, Params.UNDOCKING_TUGS);
                 this.berth.undock();
                 sleep(Params.UNDOCKING_TIME);
-                sleep(Params.TRAVEL_TIME);
 
-                // Undock the ship, guide it to the departureZone, and release the undocking tugs
+                // Guide the ship to the departureZone
+                sleep(Params.TRAVEL_TIME);
                 this.departureZone.arrive(ship);
+
+                // Release the ship and tugs
                 this.departureZone.releaseShip(this, ship.getId());
                 this.tugs.release(this, Params.UNDOCKING_TUGS);
             } catch (InterruptedException e) {

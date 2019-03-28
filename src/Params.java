@@ -1,8 +1,8 @@
 import java.util.Random;
 
 /**
- * A class which, for convenience, gathers together various system-wide parameters,
- * including time intervals.
+ * A class which, for convenience, gathers together various
+ * system-wide parameters, including time intervals.
  *
  * @author ngeard@unimelb.edu.au
  * @author ichee@student.unimelb.edu.au 736901 (edited by)

@@ -2,8 +2,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents a designated area of space where ships wait after returning from asteroid
- * mining or wait to return to mining after unloading their cargo.
+ * Represents a designated area of space where ships wait after returning from
+ * asteroid mining or wait to return to mining after unloading their cargo.
  *
  * @author ichee@student.unimelb.edu.au 736901
  *
@@ -36,7 +36,9 @@ public class WaitZone {
             } catch (InterruptedException e) {}
         }
         if (this.type.equals("arrival")) {
-            System.out.println(ship.toString() + " arrives at " + this.type + " zone");
+            System.out.println(
+              ship.toString() + " arrives at " + this.type + " zone"
+            );
         }
         this.ships.add(ship);
         notifyAll();
@@ -58,7 +60,9 @@ public class WaitZone {
                     wait();
                 } catch (InterruptedException e) {}
             }
-            System.out.println(this.ships.get(0).toString() + " departs " + this.type + " zone");
+            System.out.println(
+              this.ships.get(0).toString() + " departs " + this.type + " zone"
+            );
         }
         Ship ship = this.ships.remove(0);
         notifyAll();
@@ -76,7 +80,9 @@ public class WaitZone {
             } catch (InterruptedException e) {}
         }
         this.ships.get(0).setPilot(true);
-        System.out.println(pilot.toString() + " acquires " + this.ships.get(0).toString() + ".");
+        System.out.println(
+          pilot.toString() + " acquires " + this.ships.get(0).toString() + "."
+        );
         notifyAll();
     }
 
@@ -89,7 +95,9 @@ public class WaitZone {
         for (Ship ship: this.ships) {
             if (ship.getId().equals(shipId)) {
                 ship.setPilot(false);
-                System.out.println(pilot.toString() + " releases " + this.ships.get(0).toString());
+                System.out.println(
+                  pilot.toString() + " releases " + ship.toString()
+                );
                 notifyAll();
                 break;
             }

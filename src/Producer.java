@@ -1,5 +1,5 @@
 /**
- * Produces new cargo ships wanting to unload cargo at the space station.
+ * Produces new cargo ships wanting to unload cargo at the space station
  *
  * @author ngeard@unimelb.edu.au
  * @author ichee@student.unimelb.edu.au 736901 (edited by)
@@ -24,7 +24,7 @@ public class Producer extends Thread {
     public void run() {
         while(!isInterrupted()) {
             try {
-                // create a new cargo ship and send it to the arrvial zone.
+                // create a new cargo ship and send it to the arrvial zone
                 Ship ship = Ship.getNewShip();
                 arrivalZone.arrive(ship);
 

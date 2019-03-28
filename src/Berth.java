@@ -35,7 +35,9 @@ public class Berth {
             } catch (InterruptedException e) {}
         }
         this.ship = ship;
-        System.out.println(this.ship.toString() + " docks at " + this.name + ".");
+        System.out.println(
+          this.ship.toString() + " docks at " + this.name + "."
+        );
     }
 
     /**
@@ -48,7 +50,9 @@ public class Berth {
                 wait();
             } catch (InterruptedException e) {}
         }
-        System.out.println(this.ship.toString() + " undocks from " + this.name + ".");
+        System.out.println(
+          this.ship.toString() + " undocks from " + this.name + "."
+        );
         this.ship = null;
     }
 
