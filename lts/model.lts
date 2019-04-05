@@ -1,0 +1,53 @@
+/*
+ * Ivan Ken Weng Chee 736901
+ */
+
+const MAX_SHIPS = 1
+const NUM_PILOTS = 3
+const NUM_TUGS = 5
+const DOCKING_TUGS = 3
+const UNDOCKING_TUGS = 2
+const DOCKING_TIME = 800
+const UNDOCKING_TIME = 400
+const UNLOADING_TIME = 1200
+const TRAVEL_TIME = 800
+const DEBRIS_TIME = 1800
+const MAX_ARRIVAL_INTERVAL = 400
+const MAX_DEPARTURE_INTERVAL = 1000
+const MAX_DEBRIS_INTERVAL = 2400
+
+// PILOT = (acquire_ship -> acquire_tugs -> depart_arrival -> dock_berth -> unload -> acquire_tugs -> undock_berth -> arrive_departure -> release -> PILOT).
+
+OPERATOR = (activate -> deactivate -> OPERATOR).
+
+BERTH
+  = (dock_ship -> unload_ship -> undock_ship -> BERTH).
+
+PILOT = (acquire_ship -> acquire_docking_tugs -> dock_ship -> release_docking_tugs -> unload_ship -> acquire_undocking_tugs -> undock_ship -> release_undocking_tugs -> release_ship -> PILOT).
+
+TUGS (N=NUM_TUGS) = TUGS_COUNT[N],
+TUGS_COUNT[i:0..N]
+  = ( when (i>=DOCKING_TUGS) acquire_docking_tugs -> TUGS_COUNT[i-DOCKING_TUGS]
+    | when (i>=UNDOCKING_TUGS) acquire_undocking_tugs -> TUGS_COUNT[i-UNDOCKING_TUGS]
+    | when ((i+DOCKING_TUGS)<=NUM_TUGS) release_docking_tugs -> TUGS_COUNT[i+DOCKING_TUGS]
+    | when ((i+UNDOCKING_TUGS)<=NUM_TUGS) release_undocking_tugs -> TUGS_COUNT[i+UNDOCKING_TUGS]
+    ).
+
+ARRIVAL_ZONE (N=MAX_SHIPS) = ARRIVAL_COUNT[0],
+ARRIVAL_COUNT[i:0..N]
+  = ( when (i<MAX_SHIPS) arrive -> ARRIVAL_COUNT[i+1]
+    | when (i>0) acquire_ship -> ARRIVAL_COUNT[i-1]
+    ).
+
+DEPARTURE_ZONE (N=MAX_SHIPS) = DEPARTURE_COUNT[0],
+DEPARTURE_COUNT[i:0..N]
+  = ( when (i<MAX_SHIPS) release_ship -> DEPARTURE_COUNT[i+1]
+    | when (i>0) depart -> DEPARTURE_COUNT[i-1]
+    ).
+
+PRODUCER
+  = (arrive -> PRODUCER).
+CONSUMER
+  = (depart -> CONSUMER).
+
+|| MAIN = (PRODUCER || ARRIVAL_ZONE(MAX_SHIPS) || PILOT || BERTH || TUGS(NUM_TUGS) || DEPARTURE_ZONE(MAX_SHIPS) || CONSUMER).
