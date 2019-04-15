@@ -3,15 +3,17 @@
  */
 
 const MAX_SHIPS = 1
-const NUM_PILOTS = 1
-const NUM_TUGS = 5
+const NUM_PILOTS = 3
+const NUM_TUGS = 7
 const DOCKING_TUGS = 3
 const UNDOCKING_TUGS = 2
 
-BERTH
-  = ( activate_shield -> deactivate_shield -> BERTH
-    | dock_ship -> BERTH
-    | undock_ship -> BERTH
+BERTH (N=1) = BERTH_COUNT[0],
+BERTH_COUNT[i:0..N]
+  = ( when (i==0) activate_shield -> deactivate_shield -> BERTH_COUNT[i]
+    | when (i==0) p[1..NUM_PILOTS].dock_ship -> BERTH_COUNT[i+1]
+    | when (i==1) activate_shield -> deactivate_shield -> BERTH_COUNT[i]
+    | when (i==1) p[1..NUM_PILOTS].undock_ship -> BERTH_COUNT[i-1]
     ).
 
 OPERATOR
@@ -36,21 +38,21 @@ PILOT
 
 TUGS (N=NUM_TUGS) = TUGS_COUNT[N],
 TUGS_COUNT[i:0..N]
-  = ( when (i>=DOCKING_TUGS) acquire_docking_tugs -> TUGS_COUNT[i-DOCKING_TUGS]
-    | when (i>=UNDOCKING_TUGS) acquire_undocking_tugs -> TUGS_COUNT[i-UNDOCKING_TUGS]
-    | when ((i+DOCKING_TUGS)<=NUM_TUGS) release_docking_tugs -> TUGS_COUNT[i+DOCKING_TUGS]
-    | when ((i+UNDOCKING_TUGS)<=NUM_TUGS) release_undocking_tugs -> TUGS_COUNT[i+UNDOCKING_TUGS]
+  = ( when (i>=DOCKING_TUGS) p[1..NUM_PILOTS].acquire_docking_tugs -> TUGS_COUNT[i-DOCKING_TUGS]
+    | when (i>=UNDOCKING_TUGS) p[1..NUM_PILOTS].acquire_undocking_tugs -> TUGS_COUNT[i-UNDOCKING_TUGS]
+    | when ((i+DOCKING_TUGS)<=NUM_TUGS) p[1..NUM_PILOTS].release_docking_tugs -> TUGS_COUNT[i+DOCKING_TUGS]
+    | when ((i+UNDOCKING_TUGS)<=NUM_TUGS) p[1..NUM_PILOTS].release_undocking_tugs -> TUGS_COUNT[i+UNDOCKING_TUGS]
     ).
 
 ARRIVAL_ZONE (N=MAX_SHIPS) = ARRIVAL_COUNT[0],
 ARRIVAL_COUNT[i:0..N]
   = ( when (i<MAX_SHIPS) arrive -> ARRIVAL_COUNT[i+1]
-    | when (i>0) acquire_ship -> acquire_docking_tugs -> arrival_depart -> ARRIVAL_COUNT[i-1]
+    | when (i>0) p[1..NUM_PILOTS].acquire_ship -> p[1..NUM_PILOTS].acquire_docking_tugs -> p[1..NUM_PILOTS].arrival_depart -> ARRIVAL_COUNT[i-1]
     ).
 
 DEPARTURE_ZONE (N=MAX_SHIPS) = DEPARTURE_COUNT[0],
 DEPARTURE_COUNT[i:0..N]
-  = ( when (i<MAX_SHIPS) departure_arrive -> release_undocking_tugs -> release_ship -> DEPARTURE_COUNT[i+1]
+  = ( when (i<MAX_SHIPS) p[1..NUM_PILOTS].departure_arrive -> p[1..NUM_PILOTS].release_undocking_tugs -> p[1..NUM_PILOTS].release_ship -> DEPARTURE_COUNT[i+1]
     | when (i>0) depart -> DEPARTURE_COUNT[i-1]
     ).
 
@@ -61,8 +63,8 @@ CONSUMER
   = (depart -> CONSUMER).
 
 ||PILOTS (N=NUM_PILOTS)
-//= (p[i:1..N]:PILOT).
-  = (forall[i:1..N] p[i]:(PILOT)).
+  = (p[i:1..N]:PILOT).
+//  = (forall[i:1..N] p[i]:(PILOT)).
 
 ||MAIN
-  = (PRODUCER || ARRIVAL_ZONE(MAX_SHIPS) || PILOT || OPERATOR || BERTH || TUGS(NUM_TUGS) || DEPARTURE_ZONE(MAX_SHIPS) || CONSUMER).
+  = (PRODUCER || ARRIVAL_ZONE(MAX_SHIPS) || p[1..NUM_PILOTS]:PILOT || OPERATOR || BERTH || TUGS(NUM_TUGS) || DEPARTURE_ZONE(MAX_SHIPS) || CONSUMER).
