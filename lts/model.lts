@@ -9,6 +9,8 @@
  */
 // Maximum number of ships in a waitzone
 const MAX_SHIPS = 2
+// Maximum number of ships in the berth
+const MAX_BERTH_SHIPS = 1
 // Total number of pilots
 const NUM_PILOTS = 3
 // Total number of tugs
@@ -21,14 +23,16 @@ const UNDOCKING_TUGS = 2
 /*
  * Berth
  */
-BERTH (N=1) = BERTH[0],
-BERTH[i:0..N] = (
-  // Shield can be activated and deactivated at any time
-    when (i==i) deactivate_shield -> activate_shield -> BERTH[i]
+BERTH (N=1) = BERTH[0][1],
+BERTH[i:0..N][s:0..1] = (
+  // Shield can be activated
+    when (s==0) activate_shield -> BERTH[i][s+1]
+  // Shield can be deactivated
+  | when (s==1) deactivate_shield -> BERTH[i][s-1]
   // Pilots can dock a ship if there are none in the Berth
-  | when (i==0) p[1..NUM_PILOTS].dock_ship -> BERTH[i+1]
+  | when (i==0 && s==0) p[1..NUM_PILOTS].dock_ship -> BERTH[i+1][s]
   // Pilots can undock a ship only if there is one present
-  | when (i==1) p[1..NUM_PILOTS].undock_ship -> BERTH[i-1]
+  | when (i==1 && s==0) p[1..NUM_PILOTS].undock_ship -> BERTH[i-1][s]
 ).
 
 /*
@@ -122,41 +126,67 @@ CONSUMER = (
 /*
  * Safety Properties
  */
-// Every pilot which acquires a ship must release it
+// A pilot cannot acquire or release a ship twice
 property SAFE_PILOT = (acquire_ship -> release_ship -> SAFE_PILOT).
-property SAFE_BERTH = (dock_ship -> undock_ship -> SAFE_BERTH).
-property SAFE_DOCKING_TUGS = (acquire_docking_tugs -> release_docking_tugs -> SAFE_DOCKING_TUGS).
-property SAFE_UNDOCKING_TUGS = (acquire_undocking_tugs -> release_undocking_tugs -> SAFE_UNDOCKING_TUGS).
-property SAFE_OPERATOR = (activate_shield -> OPERATOR | deactivate_shield -> OPERATOR).
-
-// Same as tugs but also checks for invalid scenarios
-property SAFE_TUGS (N=NUM_TUGS) = SAFE_TUGS[N],
-SAFE_TUGS[i:0..N]
-  = ( when (DOCKING_TUGS > NUM_TUGS) acquire_docking_tugs -> ERROR
-    | when (UNDOCKING_TUGS > NUM_TUGS) acquire_undocking_tugs -> ERROR
-    | when (i>=DOCKING_TUGS) acquire_docking_tugs -> SAFE_TUGS[i-DOCKING_TUGS]
-    | when (i>=UNDOCKING_TUGS) acquire_undocking_tugs -> SAFE_TUGS[i-UNDOCKING_TUGS]
-    | when ((i+DOCKING_TUGS)<=NUM_TUGS) release_docking_tugs -> SAFE_TUGS[i+DOCKING_TUGS]
-    | when ((i+UNDOCKING_TUGS)<=NUM_TUGS) release_undocking_tugs -> SAFE_TUGS[i+UNDOCKING_TUGS]
-    ).
-
-// 
-property NO_ACQUIRE_INTERFERENCE (N=MAX_SHIPS) = NO_ACQUIRE_INTERFERENCE[0],
-NO_ACQUIRE_INTERFERENCE[i:0..N]
-  = ( when (i<MAX_SHIPS) arrive -> NO_ACQUIRE_INTERFERENCE[i+1]
-    | when (i>0) p[1..NUM_PILOTS].arrival_depart -> NO_ACQUIRE_INTERFERENCE[i-1]
-    ).
-
 ||CHECK_SAFE_PILOT = (p[1..NUM_PILOTS]:SAFE_PILOT || MAIN).
-||CHECK_SAFE_BERTH = (p[1..NUM_PILOTS]:SAFE_BERTH || MAIN).
-||CHECK_SAFE_DOCKING_TUGS = (p[1..NUM_PILOTS]:SAFE_DOCKING_TUGS || MAIN).
-||CHECK_SAFE_UNDOCKING_TUGS = (p[1..NUM_PILOTS]:SAFE_UNDOCKING_TUGS || MAIN).
-||CHECK_SAFE_OPERATOR = (SAFE_OPERATOR || MAIN).
-||CHECK_SAFE_TUGS = (p[1..NUM_PILOTS]:SAFE_TUGS(NUM_TUGS) || MAIN).
-||CHECK_NO_ACQUIRE_INTERFERENCE = (NO_ACQUIRE_INTERFERENCE(MAX_SHIPS) || MAIN).
 
-// An extra check which considers already knowing the deadlock scenario
-// The pilot stuck at the Berth will be detected
+// An operator cannot activate or deactivate the shield twice
+property SAFE_SHIELD = (
+    activate_shield -> deactivate_shield -> SAFE_SHIELD
+  | deactivate_shield -> activate_shield -> SAFE_SHIELD
+).
+||CHECK_SAFE_SHIELD = (SAFE_SHIELD || MAIN).
+
+// A berth can accept at most MAX_BERTH_SHIPS
+property SAFE_DOCK_UNDOCK (N=MAX_BERTH_SHIPS) = SAFE_DOCK_UNDOCK[N],
+SAFE_DOCK_UNDOCK[s:0..N] = (
+  // Pilots can dock a ship if there is space in the berth
+    when (s==0) p[1..NUM_PILOTS].undock_ship -> SAFE_DOCK_UNDOCK[s+1]
+  // Pilots can undock a ship only if there is one present
+  | when (s==1) p[1..NUM_PILOTS].dock_ship -> SAFE_DOCK_UNDOCK[s-1]
+).
+||CHECK_SAFE_DOCK_UNDOCK = (SAFE_DOCK_UNDOCK(MAX_BERTH_SHIPS) || MAIN).
+
+// Docking tugs acquired must be released
+property SAFE_DOCKING_TUGS (N=NUM_TUGS) = SAFE_DOCKING_TUGS[N],
+SAFE_DOCKING_TUGS[t:0..N] = (
+  // Acquire docking tugs only if there are enough
+    when (t>=DOCKING_TUGS) acquire_docking_tugs -> SAFE_DOCKING_TUGS[t-DOCKING_TUGS]
+  // Release docking tugs
+  | when ((t+DOCKING_TUGS)<=NUM_TUGS) release_docking_tugs -> SAFE_DOCKING_TUGS[t+DOCKING_TUGS]
+).
+||CHECK_SAFE_DOCKING_TUGS = (p[1..NUM_PILOTS]:SAFE_DOCKING_TUGS (NUM_TUGS) || MAIN).
+
+// Undocking tugs acquired must be released
+property SAFE_UNDOCKING_TUGS (N=NUM_TUGS) = SAFE_UNDOCKING_TUGS[N],
+SAFE_UNDOCKING_TUGS[t:0..N] = (
+  // Acquire docking tugs only if there are enough
+    when (t>=UNDOCKING_TUGS) acquire_undocking_tugs -> SAFE_UNDOCKING_TUGS[t-UNDOCKING_TUGS]
+  // Release docking tugs
+  | when ((t+UNDOCKING_TUGS)<=NUM_TUGS) release_undocking_tugs -> SAFE_UNDOCKING_TUGS[t+UNDOCKING_TUGS]
+).
+||CHECK_SAFE_UNDOCKING_TUGS = (p[1..NUM_PILOTS]:SAFE_UNDOCKING_TUGS || MAIN).
+
+||CHECK_SAFE_TUGS = (p[1..NUM_PILOTS]:SAFE_DOCKING_TUGS (NUM_TUGS) || p[1..NUM_PILOTS]:SAFE_UNDOCKING_TUGS || MAIN).
+
+// Ships entering the arrival zone must depart eventually
+property SAFE_ARRIVAL_ZONE (N=MAX_SHIPS) = SAFE_ARRIVAL_ZONE[0],
+SAFE_ARRIVAL_ZONE[i:0..N]
+  = ( when (i<MAX_SHIPS) arrive -> SAFE_ARRIVAL_ZONE[i+1]
+    | when (i>0) p[1..NUM_PILOTS].arrival_depart -> SAFE_ARRIVAL_ZONE[i-1]
+    ).
+||CHECK_SAFE_ARRIVAL_ZONE = (SAFE_ARRIVAL_ZONE(MAX_SHIPS) || MAIN).
+
+// Ships entering the departure zone must depart eventually
+property SAFE_DEPARTURE_ZONE (N=MAX_SHIPS) = SAFE_DEPARTURE_ZONE[0],
+SAFE_DEPARTURE_ZONE[i:0..N]
+  = ( when (i<MAX_SHIPS) p[1..NUM_PILOTS].departure_arrive -> SAFE_DEPARTURE_ZONE[i+1]
+    | when (i>0) depart -> SAFE_DEPARTURE_ZONE[i-1]
+    ).
+||CHECK_SAFE_DEPARTURE_ZONE = (SAFE_DEPARTURE_ZONE(MAX_SHIPS) || MAIN).
+
+// An extra check which considers already knowing the deadlock scenario formula
+// The pilot which gets stuck at the Berth will be detected
 property DEADLOCK_PILOT = (when ((NUM_TUGS - ((NUM_PILOTS-1) * DOCKING_TUGS)) < UNDOCKING_TUGS) deadlock -> ERROR).
 ||CHECK_DEADLOCK_PILOT = ({p[1..NUM_PILOTS]}::DEADLOCK_PILOT || MAIN).
 
@@ -165,5 +195,18 @@ property DEADLOCK_PILOT = (when ((NUM_TUGS - ((NUM_PILOTS-1) * DOCKING_TUGS)) < 
  */
 // Every ship eventually undocks from the berth
 progress UNDOCK = {undock_ship}
+
 // Every ship eventually departs
 progress DEPART = {depart}
+
+// Every ship arriving is eventually acquired
+progress ACQUIRE_SHIP = {acquire_ship}
+
+// Every acquired ship is eventually released
+progress RELEASE_SHIP = {release_ship}
+
+// Every tug is eventually released
+progress RELEASE_TUGS = {release_docking_tugs, release_undocking_tugs}
+
+// The shield always gets deactivated eventually
+progress DEACTIVATE_SHIELD = {deactivate_shield}
