@@ -1,70 +1,169 @@
 /*
- * Ivan Ken Weng Chee 736901
+ * Ivan Ken Weng Chee
+ * 736901
+ * Original Model
  */
 
-const MAX_SHIPS = 1
+/*
+ * Constants
+ */
+// Maximum number of ships in a waitzone
+const MAX_SHIPS = 2
+// Total number of pilots
 const NUM_PILOTS = 3
+// Total number of tugs
 const NUM_TUGS = 7
+// Number of tugs required for docking a ship
 const DOCKING_TUGS = 3
+// Number of tugs required for undocking a ship
 const UNDOCKING_TUGS = 2
 
-BERTH (N=1) = BERTH_COUNT[0],
-BERTH_COUNT[i:0..N]
-  = ( when (i==0) activate_shield -> deactivate_shield -> BERTH_COUNT[i]
-    | when (i==0) p[1..NUM_PILOTS].dock_ship -> BERTH_COUNT[i+1]
-    | when (i==1) activate_shield -> deactivate_shield -> BERTH_COUNT[i]
-    | when (i==1) p[1..NUM_PILOTS].undock_ship -> BERTH_COUNT[i-1]
+/*
+ * Berth
+ */
+BERTH (N=1) = BERTH[0],
+BERTH[i:0..N] = (
+  // Shield can be activated and deactivated at any time
+    when (i==i) deactivate_shield -> activate_shield -> BERTH[i]
+  // Pilots can dock a ship if there are none in the Berth
+  | when (i==0) p[1..NUM_PILOTS].dock_ship -> BERTH[i+1]
+  // Pilots can undock a ship only if there is one present
+  | when (i==1) p[1..NUM_PILOTS].undock_ship -> BERTH[i-1]
+).
+
+/*
+ * Operator
+ */
+OPERATOR = (
+  // Activates the shield
+    activate_shield -> OPERATOR
+  // Deactivates the shield
+  | deactivate_shield -> OPERATOR
+).
+
+/*
+ * Pilot
+ */
+PILOT = (
+  // Acquire a ship and docking tugs, then leaves arrival zone
+     acquire_ship -> acquire_docking_tugs -> arrival_depart
+  // Docks the ship, release docking tugs, and unloads cargo
+  -> dock_ship -> release_docking_tugs -> unload_ship
+  // Acquires undocking tugs and undocks the ship
+  -> acquire_undocking_tugs -> undock_ship
+  // Arrives at the departure zone, releases undocking tugs and ship
+  -> departure_arrive -> release_undocking_tugs -> release_ship -> PILOT
+).
+
+/*
+ * Tugs
+ */
+TUGS (N=NUM_TUGS) = TUGS[N],
+TUGS[i:0..N] = (
+  // Acquire docking tugs only if there are enough
+    when (i>=DOCKING_TUGS) acquire_docking_tugs -> TUGS[i-DOCKING_TUGS]
+  // Acquire undocking tugs only if there are enough
+  | when (i>=UNDOCKING_TUGS) acquire_undocking_tugs -> TUGS[i-UNDOCKING_TUGS]
+  // Release docking tugs
+  | when ((i+DOCKING_TUGS)<=NUM_TUGS) release_docking_tugs -> TUGS[i+DOCKING_TUGS]
+  // Release undocking tugs
+  | when ((i+UNDOCKING_TUGS)<=NUM_TUGS) release_undocking_tugs -> TUGS[i+UNDOCKING_TUGS]
+).
+
+/*
+ * Arrival Zone
+ */
+ARRIVAL_ZONE (N=MAX_SHIPS) = ARRIVAL_ZONE[0][1],
+ARRIVAL_ZONE[i:0..N][j:0..1] = (
+  // Ships can arrive when there is enough space
+    when (i<MAX_SHIPS) arrive -> ARRIVAL_ZONE[i+1][j]
+  // A ship can be acquired if the first ship is available
+  | when (i>0 && j==1) p[1..NUM_PILOTS].acquire_ship -> ARRIVAL_ZONE[i][j-1]
+  // A ship departs when there is at least 1 ship and it is acquired
+  | when (i>0 && j==0) p[1..NUM_PILOTS].arrival_depart -> ARRIVAL_ZONE[i-1][j+1]
+).
+
+/*
+ * Departure Zone
+ */
+DEPARTURE_ZONE (N=MAX_SHIPS) = DEPARTURE_COUNT[0][0],
+DEPARTURE_COUNT[i:0..N][j:0..1] = (
+  // Ships can arrive when there is enough space
+    when (i<MAX_SHIPS) p[1..NUM_PILOTS].departure_arrive -> DEPARTURE_COUNT[i+1][j]
+  // When a ship is released, the ship is unoccupied
+  | when (i>0 && j==0) p[1..NUM_PILOTS].release_ship -> DEPARTURE_COUNT[i][j+1]
+  // Ship can depart when it has been unoccupied
+  | when (i>0 && j==1) depart -> DEPARTURE_COUNT[i-1][j-1]
+).
+
+/*
+ * Producer
+ */
+PRODUCER = (
+  // Places a ship in the arrival zone
+  arrive -> PRODUCER
+).
+
+/*
+ * Consumer
+ */
+CONSUMER = (
+  // Takes a ship from the departure zone
+  depart -> CONSUMER
+).
+
+/*
+ * Main process
+ */
+||MAIN = (
+  PRODUCER || ARRIVAL_ZONE(MAX_SHIPS) || p[i:1..NUM_PILOTS]:PILOT || BERTH || {p[1..NUM_PILOTS]}::TUGS(NUM_TUGS) || DEPARTURE_ZONE(MAX_SHIPS) || CONSUMER
+).
+
+/*
+ * Safety Properties
+ */
+// Every pilot which acquires a ship must release it
+property SAFE_PILOT = (acquire_ship -> release_ship -> SAFE_PILOT).
+property SAFE_BERTH = (dock_ship -> undock_ship -> SAFE_BERTH).
+property SAFE_DOCKING_TUGS = (acquire_docking_tugs -> release_docking_tugs -> SAFE_DOCKING_TUGS).
+property SAFE_UNDOCKING_TUGS = (acquire_undocking_tugs -> release_undocking_tugs -> SAFE_UNDOCKING_TUGS).
+property SAFE_OPERATOR = (activate_shield -> OPERATOR | deactivate_shield -> OPERATOR).
+
+// Same as tugs but also checks for invalid scenarios
+property SAFE_TUGS (N=NUM_TUGS) = SAFE_TUGS[N],
+SAFE_TUGS[i:0..N]
+  = ( when (DOCKING_TUGS > NUM_TUGS) acquire_docking_tugs -> ERROR
+    | when (UNDOCKING_TUGS > NUM_TUGS) acquire_undocking_tugs -> ERROR
+    | when (i>=DOCKING_TUGS) acquire_docking_tugs -> SAFE_TUGS[i-DOCKING_TUGS]
+    | when (i>=UNDOCKING_TUGS) acquire_undocking_tugs -> SAFE_TUGS[i-UNDOCKING_TUGS]
+    | when ((i+DOCKING_TUGS)<=NUM_TUGS) release_docking_tugs -> SAFE_TUGS[i+DOCKING_TUGS]
+    | when ((i+UNDOCKING_TUGS)<=NUM_TUGS) release_undocking_tugs -> SAFE_TUGS[i+UNDOCKING_TUGS]
     ).
 
-OPERATOR
-  = ( activate_shield -> OPERATOR
-    | deactivate_shield -> OPERATOR
+// 
+property NO_ACQUIRE_INTERFERENCE (N=MAX_SHIPS) = NO_ACQUIRE_INTERFERENCE[0],
+NO_ACQUIRE_INTERFERENCE[i:0..N]
+  = ( when (i<MAX_SHIPS) arrive -> NO_ACQUIRE_INTERFERENCE[i+1]
+    | when (i>0) p[1..NUM_PILOTS].arrival_depart -> NO_ACQUIRE_INTERFERENCE[i-1]
     ).
 
-PILOT
-  = (    acquire_ship
-      -> acquire_docking_tugs
-      -> arrival_depart
-      -> dock_ship
-      -> release_docking_tugs
-      -> unload_ship
-      -> acquire_undocking_tugs
-      -> undock_ship
-      -> departure_arrive
-      -> release_undocking_tugs
-      -> release_ship
-      -> PILOT
-    ).
+||CHECK_SAFE_PILOT = (p[1..NUM_PILOTS]:SAFE_PILOT || MAIN).
+||CHECK_SAFE_BERTH = (p[1..NUM_PILOTS]:SAFE_BERTH || MAIN).
+||CHECK_SAFE_DOCKING_TUGS = (p[1..NUM_PILOTS]:SAFE_DOCKING_TUGS || MAIN).
+||CHECK_SAFE_UNDOCKING_TUGS = (p[1..NUM_PILOTS]:SAFE_UNDOCKING_TUGS || MAIN).
+||CHECK_SAFE_OPERATOR = (SAFE_OPERATOR || MAIN).
+||CHECK_SAFE_TUGS = (p[1..NUM_PILOTS]:SAFE_TUGS(NUM_TUGS) || MAIN).
+||CHECK_NO_ACQUIRE_INTERFERENCE = (NO_ACQUIRE_INTERFERENCE(MAX_SHIPS) || MAIN).
 
-TUGS (N=NUM_TUGS) = TUGS_COUNT[N],
-TUGS_COUNT[i:0..N]
-  = ( when (i>=DOCKING_TUGS) p[1..NUM_PILOTS].acquire_docking_tugs -> TUGS_COUNT[i-DOCKING_TUGS]
-    | when (i>=UNDOCKING_TUGS) p[1..NUM_PILOTS].acquire_undocking_tugs -> TUGS_COUNT[i-UNDOCKING_TUGS]
-    | when ((i+DOCKING_TUGS)<=NUM_TUGS) p[1..NUM_PILOTS].release_docking_tugs -> TUGS_COUNT[i+DOCKING_TUGS]
-    | when ((i+UNDOCKING_TUGS)<=NUM_TUGS) p[1..NUM_PILOTS].release_undocking_tugs -> TUGS_COUNT[i+UNDOCKING_TUGS]
-    ).
+// An extra check which considers already knowing the deadlock scenario
+// The pilot stuck at the Berth will be detected
+property DEADLOCK_PILOT = (when ((NUM_TUGS - ((NUM_PILOTS-1) * DOCKING_TUGS)) < UNDOCKING_TUGS) deadlock -> ERROR).
+||CHECK_DEADLOCK_PILOT = ({p[1..NUM_PILOTS]}::DEADLOCK_PILOT || MAIN).
 
-ARRIVAL_ZONE (N=MAX_SHIPS) = ARRIVAL_COUNT[0],
-ARRIVAL_COUNT[i:0..N]
-  = ( when (i<MAX_SHIPS) arrive -> ARRIVAL_COUNT[i+1]
-    | when (i>0) p[1..NUM_PILOTS].acquire_ship -> p[1..NUM_PILOTS].acquire_docking_tugs -> p[1..NUM_PILOTS].arrival_depart -> ARRIVAL_COUNT[i-1]
-    ).
-
-DEPARTURE_ZONE (N=MAX_SHIPS) = DEPARTURE_COUNT[0],
-DEPARTURE_COUNT[i:0..N]
-  = ( when (i<MAX_SHIPS) p[1..NUM_PILOTS].departure_arrive -> p[1..NUM_PILOTS].release_undocking_tugs -> p[1..NUM_PILOTS].release_ship -> DEPARTURE_COUNT[i+1]
-    | when (i>0) depart -> DEPARTURE_COUNT[i-1]
-    ).
-
-PRODUCER
-  = (arrive -> PRODUCER).
-
-CONSUMER
-  = (depart -> CONSUMER).
-
-||PILOTS (N=NUM_PILOTS)
-  = (p[i:1..N]:PILOT).
-//  = (forall[i:1..N] p[i]:(PILOT)).
-
-||MAIN
-  = (PRODUCER || ARRIVAL_ZONE(MAX_SHIPS) || p[1..NUM_PILOTS]:PILOT || OPERATOR || BERTH || TUGS(NUM_TUGS) || DEPARTURE_ZONE(MAX_SHIPS) || CONSUMER).
+/*
+ * Liveness Properties
+ */
+// Every ship eventually undocks from the berth
+progress UNDOCK = {undock_ship}
+// Every ship eventually departs
+progress DEPART = {depart}
