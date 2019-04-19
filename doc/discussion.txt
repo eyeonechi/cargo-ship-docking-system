@@ -1,4 +1,25 @@
 ﻿Ivan Ken Weng Chee
 736901
 ichee@student.unimelb.edu.au
-Assignment 1a Discussion
+Assignment 1b Discussion
+
+
+When implementing my original model in LTSA, I realised it to be slightly more complex than originally thought. For example, I had used an arraylist to hold multiple ships in the wait zones, which was not explicitly stated in the specification, but led to many different states where things might have gone wrong. As the number of ships increases, so does the complexity of the resulting state diagram.
+
+
+Just with the Java implementation, the original model experiences a deadlock when a pilot which wants to undock a ship is not able to acquire enough undocking tugs. However, due to the independence of the operator, LTSA detects this as a progress violation, where the actions {activate_shield, deactivate_shield} occur indefinitely, signifying the operator is a strongly connected component on the graph. This represents a livelock, where something is happening, but nothing useful happens.
+
+
+After writing safety checks, I realised there are a number of small issues which I have not considered while writing the Java implementation. For example, when releasing tugs, my original model does not check that the added tugs do not surpass the total number of tugs. Although my original model did not detect any safety issues, I realised some components like my Berth have logic that can be broken down, such as checking both the shield activation and whether a ship is present together. Breaking them down and writing separate safety checks for the shield alone, as well as the ship presence, helped with identifying logic i did not pick up before submitting Part 1a.
+
+
+When submitting Part 1a, I was worried about missing certain elements due to some possible ambiguity when understanding the specification. However, if I were to rewrite my Java implementation based on the modified model I have written in LTSA, I would have more confidence that my implementation would not be buggy. More importantly, I would have the confidence to extend my implementation to introduce additional complexity as I now know how to verify my logic beforehand.
+
+
+For the solution to the deadlock scenario, I have chosen to implement pilots, which when acquiring docking tugs, acquire the maximum of both DOCKING_TUGS and UNDOCKING_TUGS. Once docking a ship at the berth, the pilot then releases just enough tugs to have the required amount needed to undock. In the case of UNDOCKING_TUGS being greater, the pilot releases no tugs at the berth. The pilot then releases everything left when releasing undocking tugs.
+
+
+In this way, the deadlock can be avoided, and somewhat handles lack of contention, where the pilot releases as many tugs as possible so other pilots can wait with minimal time. In contrast, this would improve system performance compared to say, pilots acquiring (DOCKING_TUGS + UNDOCKING_TUGS) together, or separating the pool of tugs into two pools, each exclusively for docking and undocking respectively.
+
+
+After implementing this, the progress violation does not occur anymore. However, even after Part 1b, I remain unconvinced that there are no problems with my solution, but I feel more confident about it.

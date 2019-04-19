@@ -1,7 +1,7 @@
 /*
  * Ivan Ken Weng Chee
  * 736901
- * Original Model
+ * Modified/Corrected Model
  */
 
 /*
@@ -83,22 +83,22 @@ TUGS (N=NUM_TUGS) = TUGS[N],
 TUGS[i:0..N] = (
   // Acquire docking tugs if docking tugs is greater
     when (i>=DOCKING_TUGS && DOCKING_TUGS >= UNDOCKING_TUGS)
-      p[RAN_PILOTS].acquire_docking_tugs -> TUGS[i-DOCKING_TUGS]
+      acquire_docking_tugs -> TUGS[i-DOCKING_TUGS]
   // Acquire total of undocking tugs if docking tugs is lesser
   | when (i>=UNDOCKING_TUGS && DOCKING_TUGS < UNDOCKING_TUGS)
-      p[RAN_PILOTS].acquire_docking_tugs -> TUGS[i-UNDOCKING_TUGS]
+      acquire_docking_tugs -> TUGS[i-UNDOCKING_TUGS]
   // Does not do anything as undocking tugs are already acquired
   | when (i==i)
-      p[RAN_PILOTS].acquire_undocking_tugs -> TUGS[i]
+      acquire_undocking_tugs -> TUGS[i]
   // Release until enough tugs remain for undocking
   | when ((i+DOCKING_TUGS)<=NUM_TUGS && DOCKING_TUGS >= UNDOCKING_TUGS)
-      p[RAN_PILOTS].release_docking_tugs -> TUGS[i+(DOCKING_TUGS-UNDOCKING_TUGS)]
+      release_docking_tugs -> TUGS[i+(DOCKING_TUGS-UNDOCKING_TUGS)]
   // Do not release any tugs if already acquired enough
   | when (DOCKING_TUGS < UNDOCKING_TUGS)
-      p[RAN_PILOTS].release_docking_tugs -> TUGS[i]
+      release_docking_tugs -> TUGS[i]
   // Release undocking tugs as usual
   | when ((i+UNDOCKING_TUGS)<=NUM_TUGS)
-      p[RAN_PILOTS].release_undocking_tugs -> TUGS[i+UNDOCKING_TUGS]
+      release_undocking_tugs -> TUGS[i+UNDOCKING_TUGS]
 ).
 
 /*
@@ -190,7 +190,7 @@ SAFE_DOCK_UNDOCK[s:0..N] = (
   // Pilots can undock a ship only if there is one present
   | when (s==1) p[RAN_PILOTS].dock_ship -> SAFE_DOCK_UNDOCK[s-1]
 ).
-||CHECK_SAFE_DOCK_UNDOCK = (SAFE_DOCK_UNDOCK(MAX_BERTH_SHIPS) || MAIN).
+||CHECK_SAFE_DOCK_UNDOCK = (SAFE_DOCK_UNDOCK(1) || MAIN).
 
 // Docking tugs acquired must be released
 property SAFE_DOCKING_TUGS (N=NUM_TUGS) = SAFE_DOCKING_TUGS[N],
