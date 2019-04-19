@@ -1,48 +1,77 @@
+/**
+ * The berth of the USS Emafor at which ships dock and unload their cargo.
+ * Contains a shield which is activated on detection of space debris.
+ *
+ * @author ichee@student.unimelb.edu.au 736901
+ *
+ */
 public class Berth {
 
-  private String name;
-  private Ship ship;
-  private Boolean shield;
+    // name of the berth
+    private String name;
 
-  public Berth(String name) {
-    this.name = name;
-    this.shield = false;
-  }
+    // ship currently in the berth
+    private Ship ship;
 
-  public synchronized void dock(Ship ship) {
-    while (this.shield == true || this.ship != null) {
-      try {
-        wait();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
+    // a flag indicating whether the shield is activated or not
+    private Boolean shield;
+
+    /**
+     * Creates a new berth with a given name
+     */
+    public Berth(String name) {
+        this.name = name;
+        this.shield = false;
     }
-    this.ship = ship;
-    System.out.println(this.ship.toString() + " docks at " + this.name + ".");
-  }
 
-  public synchronized void undock() {
-    while (this.shield) {
-      try {
-        wait();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
+    /**
+     * Docks a ship in the berth
+     */
+    public synchronized void dock(Ship ship) {
+        // ship can only dock if shield is deactivated and berth is empty
+        while (this.shield == true || this.ship != null) {
+            try {
+                wait();
+            } catch (InterruptedException e) {}
+        }
+        this.ship = ship;
+        System.out.println(
+          this.ship.toString() + " docks at " + this.name + "."
+        );
     }
-    System.out.println(this.ship.toString() + " undocks from " + this.name + ".");
-    this.ship = null;
-  }
 
-  public synchronized void activate() {
-    this.shield = true;
-    System.out.println("Shield is activated.");
-    notifyAll();
-  }
+    /**
+     * Undocks a ship from the berth
+     */
+    public synchronized void undock() {
+        // ship can only undock if shield is deactivated
+        while (this.shield) {
+            try {
+                wait();
+            } catch (InterruptedException e) {}
+        }
+        System.out.println(
+          this.ship.toString() + " undocks from " + this.name + "."
+        );
+        this.ship = null;
+    }
 
-  public synchronized void deactivate() {
-    this.shield = false;
-    System.out.println("Shield is deactivated.");
-    notifyAll();
-  }
+    /**
+     * Activates the shield
+     */
+    public synchronized void activateShield() {
+        this.shield = true;
+        System.out.println("Shield is activated.");
+        notifyAll();
+    }
+
+    /**
+     * Deactivates the shield
+     */
+    public synchronized void deactivateShield() {
+        this.shield = false;
+        System.out.println("Shield is deactivated.");
+        notifyAll();
+    }
 
 }

@@ -6,15 +6,13 @@
  *  - starting all of the processes;
  *
  * @author ngeard@unimelb.edu.au
- *
+ * @author ichee@student.unimelb.edu.au 736901 (edited by)
  */
-
 public class Main {
 
     /**
      * The driver of the space station docking simulation
      */
-
     public static void main(String [] args) throws InterruptedException {
 
         // generate the locations and tugs
@@ -50,4 +48,5 @@ public class Main {
         consumer.join();
         operator.join();
     }
+
 }
