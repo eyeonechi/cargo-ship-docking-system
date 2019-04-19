@@ -1,65 +1,97 @@
+/**
+ * A pilot which operates the arriving ships to dock,
+ * unload, and undock safely at the Berth,
+ * until it safely arrives at the departure zone.
+ *
+ * @author ichee@student.unimelb.edu.au 736901
+ *
+ */
 public class Pilot extends Thread {
 
-  private Integer id;
-  private WaitZone arrivalZone;
-  private WaitZone departureZone;
-  private Tugs tugs;
-  private Berth berth;
+    // pilot id
+    private Integer id;
 
-  public Pilot(Integer id, WaitZone arrivalZone, WaitZone departureZone, Tugs tugs, Berth berth) {
-    this.id = id;
-    this.arrivalZone = arrivalZone;
-    this.departureZone = departureZone;
-    this.tugs = tugs;
-    this.berth = berth;
-  }
+    // arrival and departure zones
+    private WaitZone arrivalZone;
+    private WaitZone departureZone;
 
-  public void run() {
-    while(!isInterrupted()) {
-      // Acquires a newly arrived cargo ship
-      Boolean acquire = false;
-      while (acquire == false) {
-        acquire = this.arrivalZone.acquireShip(this);
-      }
+    // pool of tugs
+    private Tugs tugs;
 
-      // Acquires the required number of tugs to dock the ship
-      Boolean tugs = false;
-      while (tugs == false) {
-        tugs = this.tugs.acquire(Params.DOCKING_TUGS);
-      }
-      System.out.println(this.toString() + " acquires " + Params.DOCKING_TUGS + " tugs (" + this.tugs.getNumTugs() + " available).");
-      Ship ship = this.arrivalZone.depart();
+    // berth of the USS Emafor
+    private Berth berth;
 
-      // Dock the ship and release tugs
-      Boolean dock = false;
-      while (dock == false) {
-        dock = this.berth.dock(ship);
-      }
-      this.tugs.release(Params.DOCKING_TUGS);
-      System.out.println(this.toString() + " releases " + Params.DOCKING_TUGS + " tugs (" + (this.tugs.getNumTugs() + Params.DOCKING_TUGS) + " available).");
-
-      ship.unload();
-
-      // After the ship is unloaded, acquires tugs for undocking
-      tugs = false;
-      while (tugs == false) {
-        tugs = this.tugs.acquire(Params.UNDOCKING_TUGS);
-      }
-      System.out.println(this.toString() + " acquires " + Params.UNDOCKING_TUGS + " tugs (" + this.tugs.getNumTugs() + " available).");
-      Boolean undock = false;
-      while (undock == false) {
-        undock = this.berth.undock();
-      }
-
-      // Undock the ship and place it into the departureZone, releasing the undocking tugs
-      this.departureZone.arrive(ship);
-      this.tugs.release(Params.UNDOCKING_TUGS);
-      System.out.println(this.toString() + " releases " + Params.UNDOCKING_TUGS + " tugs (" + (this.tugs.getNumTugs() + Params.UNDOCKING_TUGS) + " available).");
+    /**
+     * Creates a new pilot to start work
+     * @param id            : pilot id
+     * @param arrivalZone   : the arrival zone
+     * @param departureZone : the departure zone
+     * @param tugs          : the pool of tugs
+     * @param berth         : the USS Emafor berth
+     */
+    public Pilot(
+      Integer id,
+      WaitZone arrivalZone,
+      WaitZone departureZone,
+      Tugs tugs,
+      Berth berth
+    ) {
+        this.id = id;
+        this.arrivalZone = arrivalZone;
+        this.departureZone = departureZone;
+        this.tugs = tugs;
+        this.berth = berth;
     }
-  }
 
-  public String toString() {
-    return "pilot [" + id + "]";
-  }
+    /**
+     * Continuously pilots newly arrived ships to the berth for unloading,
+     * then to the departure zone to await departure
+     */
+    public void run() {
+        while (!isInterrupted()) {
+            try {
+                // Acquires a newly arrived cargo ship
+                this.arrivalZone.acquireShip(this);
+
+                // Acquires the required number of tugs to dock the ship
+                this.tugs.acquire(this, Params.DOCKING_TUGS);
+
+                // Depart from the arrival zone and head to the berth
+                Ship ship = this.arrivalZone.depart();
+                sleep(Params.TRAVEL_TIME);
+
+                // Dock the ship and release tugs
+                this.berth.dock(ship);
+                sleep(Params.DOCKING_TIME);
+                this.tugs.release(this, Params.DOCKING_TUGS);
+
+                // Commence unloading process
+                ship.unload();
+                sleep(Params.UNLOADING_TIME);
+
+                // After unloading, acquires tugs and undock the ship
+                this.tugs.acquire(this, Params.UNDOCKING_TUGS);
+                this.berth.undock();
+                sleep(Params.UNDOCKING_TIME);
+
+                // Guide the ship to the departureZone
+                sleep(Params.TRAVEL_TIME);
+                this.departureZone.arrive(ship);
+
+                // Release the ship and tugs
+                this.departureZone.releaseShip(this, ship.getId());
+                this.tugs.release(this, Params.UNDOCKING_TUGS);
+            } catch (InterruptedException e) {
+                this.interrupt();
+            }
+        }
+    }
+
+    /**
+     * Produce an identifying string for the pilot
+     */
+    public String toString() {
+        return "pilot " + id;
+    }
 
 }

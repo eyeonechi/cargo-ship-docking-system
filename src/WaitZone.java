@@ -1,43 +1,107 @@
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents a designated area of space where ships wait after returning from
+ * asteroid mining or wait to return to mining after unloading their cargo.
+ *
+ * @author ichee@student.unimelb.edu.au 736901
+ *
+ */
 public class WaitZone {
 
-  private String type;
-  private List<Ship> ships;
+    // type of wait zone
+    private String type;
 
-  public WaitZone(String type) {
-    this.type = type;
-    this.ships = new ArrayList<Ship>();
-  }
+    // ships currently in the wait zone
+    private List<Ship> ships;
 
-  public synchronized void arrive(Ship ship) {
-    this.ships.add(ship);
-    ship.setPilot(false);
-    System.out.println(this.ships.get(0).toString() + " arrives at " + this.type + " zone.");
-  }
-
-  public synchronized Ship depart() {
-    if (this.ships.size() > 0) {
-      System.out.println(this.ships.get(0).toString() + " departs " + this.type + " zone.");
-      return this.ships.remove(0);
+    /**
+     * Creates a new wait zone
+     * @param type : the type of wait zone
+     */
+    public WaitZone(String type) {
+        this.type = type;
+        this.ships = new ArrayList<Ship>();
     }
-    return null;
-  }
 
-  public synchronized Boolean acquireShip(Pilot pilot) {
-    for (Ship ship: this.ships) {
-      if (!ship.hasPilot()) {
-        ship.setPilot(true);
-        System.out.println(pilot.toString() + " acquires " + ship.toString());
-        return true;
-      }
+    /**
+     * A ship arrives at the wait zone
+     * @param ship : the ship that arrives
+     */
+    public synchronized void arrive(Ship ship) {
+        while (this.ships.size() == Params.MAX_SHIPS) {
+            try {
+                wait();
+            } catch (InterruptedException e) {}
+        }
+        if (this.type.equals("arrival")) {
+            System.out.println(
+              ship.toString() + " arrives at " + this.type + " zone"
+            );
+        }
+        this.ships.add(ship);
+        notifyAll();
     }
-    return false;
-  }
 
-  public synchronized Boolean isFull() {
-    return this.ships.size() == 1;
-  }
+    /**
+     * A ship departs from the wait zone
+     * @return : departing ship
+     */
+    public synchronized Ship depart() {
+        while (this.ships.size() == 0) {
+            try {
+                wait();
+            } catch (InterruptedException e) {}
+        }
+        if (this.type.equals("departure")) {
+            while (this.ships.get(0).hasPilot()) {
+                try {
+                    wait();
+                } catch (InterruptedException e) {}
+            }
+            System.out.println(
+              this.ships.get(0).toString() + " departs " + this.type + " zone"
+            );
+        }
+        Ship ship = this.ships.remove(0);
+        notifyAll();
+        return ship;
+    }
+
+    /**
+     * Assigns a pilot to an empty ship in the wait zone
+     * @param pilot : the pilot acquiring a ship
+     */
+    public synchronized void acquireShip(Pilot pilot) {
+        while (this.ships.size() == 0 || this.ships.get(0).hasPilot()) {
+            try {
+                wait();
+            } catch (InterruptedException e) {}
+        }
+        this.ships.get(0).setPilot(true);
+        System.out.println(
+          pilot.toString() + " acquires " + this.ships.get(0).toString() + "."
+        );
+        notifyAll();
+    }
+
+    /**
+     * Removes a pilot from a ship in the wait zone
+     * @param pilot  : the pilot releasing a ship
+     * @param shipId : the id of the ship
+     */
+    public synchronized void releaseShip(Pilot pilot, Integer shipId) {
+        for (Ship ship: this.ships) {
+            if (ship.getId().equals(shipId)) {
+                ship.setPilot(false);
+                System.out.println(
+                  pilot.toString() + " releases " + ship.toString()
+                );
+                notifyAll();
+                break;
+            }
+        }
+    }
 
 }
